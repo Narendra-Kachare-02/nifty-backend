@@ -102,3 +102,8 @@ vine==5.1.0
 wcwidth==0.2.14
 WebOb==1.8.9
 yarl==1.22.0
+
+# Production dependencies
+gunicorn==23.0.0
+whitenoise==6.9.0
+dj-database-url==2.3.0

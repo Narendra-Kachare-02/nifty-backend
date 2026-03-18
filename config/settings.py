@@ -14,6 +14,7 @@ from firebase_admin import initialize_app, get_app
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 FIREBASE_APP = initialize_app()
@@ -29,11 +30,13 @@ APPS_DIR = BASE_DIR / "dashboard_backend"
 
 # Security and configuration
 SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = os.environ.get("DEBUG")
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 
 # Define allowed hosts as a list derived from environment variables
-ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1', '[::1]', '10.0.2.2','192.168.137.1','192.168.43.193']
-# ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(",")
+
+# Render.com sets RENDER=true in their environment
+RENDER = os.environ.get("RENDER", "False").lower() in ("true", "1", "yes")
 
 
 # APPS
@@ -68,6 +71,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     "request_id.middleware.RequestIdMiddleware",
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -130,22 +134,34 @@ TEMPLATES = [
 # WSGI application entry point
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database configuration (single DB, django schema)
-_db_options = {}
-if schema := os.environ.get('SQL_SCHEMA'):
-    _db_options['options'] = f'-c search_path={schema},public'
+# Database configuration
+# Support both DATABASE_URL (Render) and individual SQL_* env vars (local/Docker)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('SQL_ENGINE'),
-        'NAME': os.environ.get('SQL_DATABASE'),
-        'USER': os.environ.get('SQL_USER'),
-        'PASSWORD': os.environ.get('SQL_PASSWORD'),
-        'HOST': os.environ.get('SQL_HOST'),
-        'PORT': os.environ.get('SQL_PORT'),
-        **({'OPTIONS': _db_options} if _db_options else {}),
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    _db_options = {}
+    if schema := os.environ.get('SQL_SCHEMA'):
+        _db_options['options'] = f'-c search_path={schema},public'
+
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('SQL_DATABASE'),
+            'USER': os.environ.get('SQL_USER'),
+            'PASSWORD': os.environ.get('SQL_PASSWORD'),
+            'HOST': os.environ.get('SQL_HOST'),
+            'PORT': os.environ.get('SQL_PORT'),
+            **({'OPTIONS': _db_options} if _db_options else {}),
+        }
+    }
 
 # Password validation settings
 AUTH_PASSWORD_VALIDATORS = [
@@ -171,6 +187,8 @@ USE_TZ = True
 
 # Static files configuration
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type for models
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -273,7 +291,8 @@ CELERY_TASK_SOFT_TIME_LIMIT = 60  # 1 minute
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
 
-CORS_ALLOWED_ORIGINS = [
+# CORS allowed origins - includes local dev and production
+_cors_origins = [
     "http://localhost:5173",   # Vite dev
     "http://127.0.0.1:5173",
     "http://0.0.0.0:5173",
@@ -283,8 +302,29 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:80",
 ]
 
+# Add production frontend URL from environment
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
+if FRONTEND_URL:
+    _cors_origins.append(FRONTEND_URL)
+
+# Add any additional CORS origins from environment (comma-separated)
+EXTRA_CORS_ORIGINS = os.environ.get("EXTRA_CORS_ORIGINS", "")
+if EXTRA_CORS_ORIGINS:
+    _cors_origins.extend([origin.strip() for origin in EXTRA_CORS_ORIGINS.split(",") if origin.strip()])
+
+CORS_ALLOWED_ORIGINS = _cors_origins
+
 # CORS settings for file uploads
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF trusted origins for production
+CSRF_TRUSTED_ORIGINS = []
+if FRONTEND_URL:
+    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+if RENDER:
+    CSRF_TRUSTED_ORIGINS.extend([
+        f"https://{host}" for host in ALLOWED_HOSTS if host.startswith(".")
+    ])
 # CORS_ALLOW_HEADERS = [
 #     'accept',
 #     'accept-encoding',
