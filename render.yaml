@@ -9,6 +9,7 @@ services:
     name: nifty-redis
     plan: starter
     maxmemoryPolicy: noeviction
+    ipAllowList: []  # Allow access from all Render services (internal only)
 
   # Django API
   - type: web
