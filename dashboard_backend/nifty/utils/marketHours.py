@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 
 import pytz
 
@@ -15,8 +15,8 @@ def isMarketOpenNow(now_utc: datetime | None = None) -> bool:
     Single responsibility: determine if we're within normal market hours in IST.
     Holidays are intentionally not handled here (can be added later).
     """
-    now = now_utc or datetime.utcnow()
-    now_ist = now.replace(tzinfo=pytz.UTC).astimezone(IST)
+    now = now_utc or datetime.now(timezone.utc)
+    now_ist = now.astimezone(IST)
 
     # Mon–Fri only
     if now_ist.weekday() >= 5:
