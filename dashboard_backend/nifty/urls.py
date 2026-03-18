@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import bootstrap, latest, latestOptionChain, niftySeries
+from .views import bootstrap, cronFetchData, latest, latestOptionChain, niftySeries
 
 
 app_name = "nifty"
@@ -10,5 +10,6 @@ urlpatterns = [
     path("option-chain/latest/", latestOptionChain, name="option-chain-latest"),
     path("series/", niftySeries, name="series"),
     path("bootstrap/", bootstrap, name="bootstrap"),
+    path("cron/fetch/", cronFetchData, name="cron-fetch"),
 ]
 

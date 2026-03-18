@@ -28,6 +28,10 @@ from .utils import isMarketOpenNow
 
 logger = logging.getLogger(__name__)
 
+# Secret key for cron endpoint (set in environment)
+import os
+CRON_SECRET = os.environ.get("CRON_SECRET", "")
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -142,4 +146,62 @@ def bootstrap(request):
         raise
     except Exception as e:  # noqa: BLE001
         logger.exception("Nifty bootstrap API failed")
+        raise CustomInternalServerError(str(e))
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def cronFetchData(request):
+    """
+    Cron endpoint: Called by external cron service (e.g., cron-job.org) to fetch NSE data.
+    Replaces Celery Beat for free tier deployment.
+    
+    Requires X-Cron-Secret header for authentication.
+    Call every 1-5 minutes during market hours.
+    """
+    provided_secret = request.headers.get("X-Cron-Secret", "")
+    if not CRON_SECRET or provided_secret != CRON_SECRET:
+        return Response(
+            {"error": "Unauthorized"},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    try:
+        result = {"market_open": False, "fetched": []}
+        
+        if not isMarketOpenNow():
+            return Response(result, status=status.HTTP_200_OK)
+        
+        result["market_open"] = True
+
+        # Fetch Nifty data
+        try:
+            payload = fetchNiftyPayload()
+            saveNiftySnapshot(payload)
+            result["fetched"].append("nifty")
+            
+            chart_payload = fetchNiftyChartPayload(flag="1D")
+            saveNiftyChartSnapshot(chart_payload, flag="1D")
+            result["fetched"].append("chart_1D")
+        except Exception as e:
+            logger.exception("Cron: Failed to fetch Nifty data")
+            result["nifty_error"] = str(e)
+
+        # Fetch Option Chain data
+        try:
+            contract = fetchOptionChainContractInfo()
+            expiry_dates = contract.get("expiryDates") if isinstance(contract, dict) else None
+            expiry = expiry_dates[0] if isinstance(expiry_dates, list) and expiry_dates else None
+            if expiry:
+                oc_payload = fetchOptionChainPayload(expiry=expiry)
+                saveOptionChainSnapshot(oc_payload, symbol="NIFTY", expiryDate=expiry)
+                result["fetched"].append("option_chain")
+        except Exception as e:
+            logger.exception("Cron: Failed to fetch Option Chain data")
+            result["option_chain_error"] = str(e)
+
+        return Response(result, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.exception("Cron fetch failed")
         raise CustomInternalServerError(str(e))
