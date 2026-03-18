@@ -313,16 +313,21 @@ _cors_origins = [
 ]
 
 # Add production frontend URL from environment
-FRONTEND_URL = os.environ.get("FRONTEND_URL")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
 if FRONTEND_URL:
     _cors_origins.append(FRONTEND_URL)
 
 # Add any additional CORS origins from environment (comma-separated)
 EXTRA_CORS_ORIGINS = os.environ.get("EXTRA_CORS_ORIGINS", "")
 if EXTRA_CORS_ORIGINS:
-    _cors_origins.extend([origin.strip() for origin in EXTRA_CORS_ORIGINS.split(",") if origin.strip()])
+    _cors_origins.extend([origin.strip().rstrip("/") for origin in EXTRA_CORS_ORIGINS.split(",") if origin.strip()])
 
 CORS_ALLOWED_ORIGINS = _cors_origins
+
+# Allow all Vercel preview URLs (*.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
 
 # CORS settings for file uploads
 CORS_ALLOW_CREDENTIALS = True
