@@ -11,11 +11,11 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
-    # API base url
-    path("api/", include("config.api_router")),
-     # API schema
-    path("api/", include("dashboard_backend.users.urls", namespace="users")),
+    # API apps (put specific prefixes before the generic api/ router include)
     path("api/nifty/", include("dashboard_backend.nifty.urls", namespace="nifty")),
+    path("api/", include("dashboard_backend.users.urls", namespace="users")),
+    # API base url (generic router - keep after app includes)
+    path("api/", include("config.api_router")),
 
     # Swagger UI
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

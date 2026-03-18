@@ -6,6 +6,11 @@ __pycache__/
 media/
 staticfiles/
 
+# celery beat schedule (generated runtime file)
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat-schedule.*
+
 # local tooling
 .DS_Store
 .pytest_cache/

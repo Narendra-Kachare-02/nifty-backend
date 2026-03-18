@@ -1,0 +1,28 @@
+{
+    "data": [
+    {
+    "indexName": "NIFTY 50",
+    "open": 23632.9,
+    "high": 23862.25,
+    "low": 23618.45,
+    "last": 23760.6,
+    "previousClose": 23581.15,
+    "percChange": 0.76,
+    "yearHigh": 26373.2,
+    "yearLow": 21743.65,
+    "timeVal": "18-Mar-2026 15:28",
+    "indicativeClose": 23777.75,
+    "icChange": 196.58,
+    "icPerChange": 0.83,
+    "ffm": 108.05175402972611,
+    "peRatio": 20.63,
+    "pbRatio": 3.2,
+    "dividentYield": 1.32,
+    "full": 189991261941099.03,
+    "yearHighDt": null,
+    "yearLowDt": null,
+    "volume": 3793.40285,
+    "value": 28566.537390269
+    }
+    ]
+    }

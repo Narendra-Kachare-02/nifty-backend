@@ -2,7 +2,15 @@ import logging
 
 from celery import shared_task
 
-from .services import fetchNiftyPayload, fetchOptionChainPayload, saveNiftySnapshot, saveOptionChainSnapshot
+from .services import (
+    fetchNiftyPayload,
+    fetchNiftyChartPayload,
+    fetchOptionChainContractInfo,
+    fetchOptionChainPayload,
+    saveNiftyChartSnapshot,
+    saveNiftySnapshot,
+    saveOptionChainSnapshot,
+)
 from .utils import isMarketOpenNow
 
 
@@ -22,12 +30,17 @@ def fetchNifty():
     snapshot = saveNiftySnapshot(payload)
 
     # One high-signal log line only.
-    market_status = (payload.get("marketStatus") or {}).get("marketStatus")
+    idx = payload.get("data")[0] if isinstance(payload.get("data"), list) and payload.get("data") else {}
+    market_status = "Open" if idx else "Unknown"
     logger.info(
         "Saved Nifty snapshot captured_at=%s marketStatus=%s",
         snapshot.captured_at.isoformat(),
         market_status,
     )
+
+    # Also capture default chart (1D) for the UI.
+    chart_payload = fetchNiftyChartPayload(flag="1D")
+    saveNiftyChartSnapshot(chart_payload, flag="1D")
 
 
 @shared_task(name="nifty.fetchOptionChain", ignore_result=True)
@@ -39,8 +52,14 @@ def fetchOptionChain():
     if not isMarketOpenNow():
         return
 
-    payload = fetchOptionChainPayload()
-    snapshot = saveOptionChainSnapshot(payload, symbol="NIFTY")
+    contract = fetchOptionChainContractInfo()
+    expiry_dates = contract.get("expiryDates") if isinstance(contract, dict) else None
+    expiry = expiry_dates[0] if isinstance(expiry_dates, list) and expiry_dates else None
+    if not expiry:
+        return
+
+    payload = fetchOptionChainPayload(expiry=expiry)
+    snapshot = saveOptionChainSnapshot(payload, symbol="NIFTY", expiryDate=expiry)
 
     logger.info(
         "Saved OptionChain snapshot captured_at=%s symbol=%s expiryDate=%s",

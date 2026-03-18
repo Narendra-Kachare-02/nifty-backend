@@ -30,9 +30,9 @@ app.conf.beat_schedule = {
         "task": "nifty.fetchNifty",
         "schedule": crontab(minute="*/1", hour="10-14", day_of_week="mon-fri"),
     },
-    "nifty.fetch.market_hours.1500_1530": {
+    "nifty.fetch.market_hours.1500_1515": {
         "task": "nifty.fetchNifty",
-        "schedule": crontab(minute="0-30/1", hour="15", day_of_week="mon-fri"),
+        "schedule": crontab(minute="0-15/1", hour="15", day_of_week="mon-fri"),
     },
     "optionchain.fetch.market_hours.0915_0959": {
         "task": "nifty.fetchOptionChain",
@@ -42,9 +42,9 @@ app.conf.beat_schedule = {
         "task": "nifty.fetchOptionChain",
         "schedule": crontab(minute="*/1", hour="10-14", day_of_week="mon-fri"),
     },
-    "optionchain.fetch.market_hours.1500_1530": {
+    "optionchain.fetch.market_hours.1500_1515": {
         "task": "nifty.fetchOptionChain",
-        "schedule": crontab(minute="0-30/1", hour="15", day_of_week="mon-fri"),
+        "schedule": crontab(minute="0-15/1", hour="15", day_of_week="mon-fri"),
     },
 }
 

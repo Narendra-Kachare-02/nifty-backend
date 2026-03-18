@@ -1,0 +1,64 @@
+{
+    "records": {
+    "timestamp": "18-Mar-2026 15:30:00",
+    "underlyingValue": 23777.8,
+    "data": [
+    {
+    "expiryDates": "24-Mar-2026",
+    "CE": {
+    "strikePrice": 20950,
+    "expiryDate": "24-03-2026",
+    "underlying": "NIFTY",
+    "identifier": "OPTIDXNIFTY24-03-2026CE20950.00",
+    "openInterest": 1,
+    "changeinOpenInterest": 0,
+    "pchangeinOpenInterest": 0,
+    "totalTradedVolume": 0,
+    "impliedVolatility": 0,
+    "lastPrice": 0,
+    "change": 0,
+    "totalBuyQuantity": 3380,
+    "totalSellQuantity": 4160,
+    "buyPrice1": 2618.05,
+    "buyQuantity1": 1690,
+    "sellPrice1": 2904.5,
+    "sellQuantity1": 780,
+    "underlyingValue": 23777.8,
+    "optionType": null,
+    "pchange": 0
+    },
+    "PE": {
+    "strikePrice": 20950,
+    "expiryDate": "24-03-2026",
+    "underlying": "NIFTY",
+    "identifier": "OPTIDXNIFTY24-03-2026PE20950.00",
+    "openInterest": 75827,
+    "changeinOpenInterest": 18322,
+    "pchangeinOpenInterest": 31.86157725415181,
+    "totalTradedVolume": 213772,
+    "impliedVolatility": 42.29,
+    "lastPrice": 3.65,
+    "change": -4.65,
+    "totalBuyQuantity": 246545,
+    "totalSellQuantity": 181155,
+    "buyPrice1": 3.65,
+    "buyQuantity1": 5590,
+    "sellPrice1": 3.8,
+    "sellQuantity1": 455,
+    "underlyingValue": 23777.8,
+    "optionType": null,
+    "pchange": -56.024096385542165
+    },
+    "strikePrice": 20950
+    }
+    ],
+    "CE": {
+    "totOI": 1316172,
+    "totVol": 27947592
+    },
+    "PE": {
+    "totOI": 1399890,
+    "totVol": 20772464
+    }
+    }
+    }

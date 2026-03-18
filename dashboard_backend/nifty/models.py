@@ -43,3 +43,20 @@ class OptionChainSnapshot(models.Model):
     def __str__(self) -> str:
         return f"OptionChainSnapshot(symbol={self.symbol}, captured_at={self.captured_at.isoformat()})"
 
+
+class NiftyChartSnapshot(models.Model):
+    captured_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    indexName = models.CharField(max_length=64, default="NIFTY 50", db_index=True)
+    flag = models.CharField(max_length=8, db_index=True)  # 1D/1M/3M/6M/1Y
+
+    payload = models.JSONField(default=dict)
+
+    class Meta:
+        db_table = "nifty_chart_snapshot"
+        indexes = [
+            models.Index(fields=["indexName", "flag", "-captured_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"NiftyChartSnapshot(indexName={self.indexName}, flag={self.flag}, captured_at={self.captured_at.isoformat()})"

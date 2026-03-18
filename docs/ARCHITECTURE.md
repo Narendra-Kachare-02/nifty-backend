@@ -5,25 +5,28 @@
 - Persist snapshots in Postgres so **after market close** we keep serving the **last recorded** data.
 
 ## Data flow
-1. **Celery Beat** enqueues `nifty.fetchNifty` only during **09:15–15:30 IST** (Mon–Fri).
+1. **Celery Beat** enqueues `nifty.fetchNifty` only during **09:15–15:15 IST** (Mon–Fri).
 2. **Celery Worker** runs `dashboard_backend.nifty.tasks.fetchNifty`.
-3. **Celery Beat** also enqueues `nifty.fetchOptionChain` only during **09:15–15:30 IST** (Mon–Fri).
+3. **Celery Beat** also enqueues `nifty.fetchOptionChain` only during **09:15–15:15 IST** (Mon–Fri).
 4. **Celery Worker** runs `dashboard_backend.nifty.tasks.fetchOptionChain`.
 3. Task calls:
-   - `services.fetchNifty.fetchNiftyPayload` (NSE cookie warm-up + JSON fetch)
+   - `services.fetchNifty.fetchNiftyPayload` (Index API: `getIndexData`)
    - `services.saveNiftySnapshot.saveNiftySnapshot` (DB write)
+   - `services.fetchNiftyChart.fetchNiftyChartPayload` (Chart API: `getIndexChart`, default `1D`)
+   - `services.saveNiftyChartSnapshot.saveNiftyChartSnapshot`
 4. Option chain task calls:
-   - `services.fetchOptionChain.fetchOptionChainPayload`
+   - `services.fetchOptionChainContractInfo.fetchOptionChainContractInfo`
+   - `services.fetchOptionChain.fetchOptionChainPayload` (Option Chain v3)
    - `services.saveOptionChainSnapshot.saveOptionChainSnapshot`
 5. APIs:
    - `GET /api/nifty/latest/`
-   - `GET /api/nifty/series/?range=15M|30M|1H|1D`
+   - `GET /api/nifty/series/?range=1D|1M|3M|6M|1Y`
    - `GET /api/nifty/option-chain/latest/?expiryDate=...`
 
 ## DRY + responsibilities
 - **Views** (`views.py`): request/response only.
 - **Services** (`services/`): one responsibility per file (fetch / save / read).
-- **Constants** (`constants/`): NSE URLs/headers, market hours, intervals.
+- **Config** (`config.py`): NSE URLs/headers, market hours, intervals.
 - **Utils** (`utils/`): pure helpers like market-hours checks.
 - **Exceptions**: use custom exceptions when needed; response formatting is handled by `dashboard_backend.utils.rest_exception_handler.rest_exception_handler`.
 

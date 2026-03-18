@@ -7,24 +7,24 @@ import requests
 from ..config import (
     NSE_BASE_URL,
     NSE_DEFAULT_HEADERS,
-    NSE_OPTION_CHAIN_TYPE,
-    NSE_OPTION_CHAIN_SYMBOL,
-    NSE_OPTION_CHAIN_V3_PATH,
+    NSE_INDEX_NAME,
+    NSE_INDEX_TRACKER_FUNCTION_CHART,
+    NSE_INDEX_TRACKER_PATH,
 )
 from ..exceptions import NseFetchException, NseParseException
 
 
-def fetchOptionChainPayload(expiry: str, timeout_seconds: int = 10) -> dict[str, Any]:
+def fetchNiftyChartPayload(flag: str, timeout_seconds: int = 10) -> dict[str, Any]:
     """
-    Single responsibility: fetch NSE option chain v3 payload for NIFTY and expiry.
+    Single responsibility: fetch Chart API payload (getIndexChart) for NIFTY 50 + flag.
     """
     session = requests.Session()
 
     try:
         session.get(NSE_BASE_URL, headers=NSE_DEFAULT_HEADERS, timeout=timeout_seconds)
 
-        url = f"{NSE_BASE_URL}{NSE_OPTION_CHAIN_V3_PATH}"
-        params = {"type": NSE_OPTION_CHAIN_TYPE, "symbol": NSE_OPTION_CHAIN_SYMBOL, "expiry": expiry}
+        url = f"{NSE_BASE_URL}{NSE_INDEX_TRACKER_PATH}"
+        params = {"functionName": NSE_INDEX_TRACKER_FUNCTION_CHART, "index": NSE_INDEX_NAME, "flag": flag}
         response = session.get(url, headers=NSE_DEFAULT_HEADERS, params=params, timeout=timeout_seconds)
         if response.status_code != 200:
             raise NseFetchException(f"NSE returned status {response.status_code}")
@@ -32,17 +32,14 @@ def fetchOptionChainPayload(expiry: str, timeout_seconds: int = 10) -> dict[str,
         try:
             payload = response.json()
         except Exception as e:  # noqa: BLE001
-            raise NseParseException("Failed to parse NSE option chain JSON") from e
+            raise NseParseException("Failed to parse NSE chart JSON") from e
 
         if not isinstance(payload, dict):
-            raise NseParseException("NSE option chain payload is not an object")
+            raise NseParseException("Chart payload is not an object")
 
-        records = payload.get("records")
-        if not isinstance(records, dict):
-            raise NseParseException("Missing records in option chain payload")
-        data = records.get("data")
-        if not isinstance(data, list):
-            raise NseParseException("Missing records.data in option chain payload")
+        data = payload.get("data")
+        if not isinstance(data, dict) or "grapthData" not in data:
+            raise NseParseException("Chart payload missing data.grapthData")
 
         return payload
     except (NseFetchException, NseParseException):
