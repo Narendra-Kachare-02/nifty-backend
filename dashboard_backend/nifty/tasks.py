@@ -2,7 +2,7 @@ import logging
 
 from celery import shared_task
 
-from .services import fetchNiftyPayload, saveNiftySnapshot
+from .services import fetchNiftyPayload, fetchOptionChainPayload, saveNiftySnapshot, saveOptionChainSnapshot
 from .utils import isMarketOpenNow
 
 
@@ -27,5 +27,25 @@ def fetchNifty():
         "Saved Nifty snapshot captured_at=%s marketStatus=%s",
         snapshot.captured_at.isoformat(),
         market_status,
+    )
+
+
+@shared_task(name="nifty.fetchOptionChain", ignore_result=True)
+def fetchOptionChain():
+    """
+    Scheduled task: fetch NSE option-chain payload and persist a snapshot.
+    Guarded by market hours to avoid NSE calls after close.
+    """
+    if not isMarketOpenNow():
+        return
+
+    payload = fetchOptionChainPayload()
+    snapshot = saveOptionChainSnapshot(payload, symbol="NIFTY")
+
+    logger.info(
+        "Saved OptionChain snapshot captured_at=%s symbol=%s expiryDate=%s",
+        snapshot.captured_at.isoformat(),
+        snapshot.symbol,
+        snapshot.expiryDate,
     )
 

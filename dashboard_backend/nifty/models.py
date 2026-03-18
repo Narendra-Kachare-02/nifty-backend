@@ -23,3 +23,23 @@ class NiftySnapshot(models.Model):
     def __str__(self) -> str:
         return f"NiftySnapshot(captured_at={self.captured_at.isoformat()})"
 
+
+class OptionChainSnapshot(models.Model):
+    captured_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    symbol = models.CharField(max_length=32, default="NIFTY", db_index=True)
+    expiryDate = models.CharField(max_length=32, null=True, blank=True, db_index=True)
+
+    # Keep keys as-is; store the full NSE response.
+    payload = models.JSONField(default=dict)
+
+    class Meta:
+        db_table = "option_chain_snapshot"
+        indexes = [
+            models.Index(fields=["symbol", "-captured_at"]),
+            models.Index(fields=["symbol", "expiryDate", "-captured_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"OptionChainSnapshot(symbol={self.symbol}, captured_at={self.captured_at.isoformat()})"
+

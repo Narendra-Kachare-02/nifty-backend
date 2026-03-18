@@ -5,6 +5,8 @@
 - Saves snapshots into Postgres during market hours.
 - Serves a polling API for the frontend:
   - `GET /api/nifty/latest/`
+  - `GET /api/nifty/series/?range=15M|30M|1H|1D`
+  - `GET /api/nifty/option-chain/latest/?expiryDate=...`
 
 ## Setup
 

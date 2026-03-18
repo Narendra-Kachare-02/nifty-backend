@@ -4,7 +4,7 @@ from datetime import datetime, time
 
 import pytz
 
-from ..constants import MARKET_CLOSE_IST, MARKET_OPEN_IST
+from ..config import MARKET_CLOSE_IST, MARKET_OPEN_IST
 
 
 IST = pytz.timezone("Asia/Kolkata")

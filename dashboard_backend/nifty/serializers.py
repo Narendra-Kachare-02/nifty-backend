@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import NiftySnapshot
+from .models import NiftySnapshot, OptionChainSnapshot
 
 
 class NiftySnapshotSerializer(serializers.ModelSerializer):
@@ -17,3 +17,13 @@ class NiftySnapshotSerializer(serializers.ModelSerializer):
             "data",
         ]
 
+
+class OptionChainSnapshotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OptionChainSnapshot
+        fields = [
+            "captured_at",
+            "symbol",
+            "expiryDate",
+            "payload",
+        ]

@@ -4,7 +4,7 @@ from typing import Any
 
 import requests
 
-from ..constants import NSE_BASE_URL, NSE_DEFAULT_HEADERS, NSE_NIFTY_50_URL
+from ..config import NSE_BASE_URL, NSE_DEFAULT_HEADERS, NSE_NIFTY_50_URL
 from ..exceptions import NseFetchException, NseParseException
 
 

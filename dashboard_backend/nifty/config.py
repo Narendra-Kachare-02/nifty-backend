@@ -6,10 +6,12 @@ MARKET_CLOSE_IST = time(15, 30)
 
 # Fetch cadence (Celery beat schedule also limits the window).
 NIFTY_FETCH_INTERVAL_SECONDS = 60
+OPTION_CHAIN_FETCH_INTERVAL_SECONDS = 60
 
 # NSE endpoints
 NSE_BASE_URL = "https://www.nseindia.com"
 NSE_NIFTY_50_URL = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
+NSE_OPTION_CHAIN_NIFTY_URL = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
 
 # NSE often blocks non-browser clients; keep headers stable + minimal.
 NSE_DEFAULT_HEADERS = {

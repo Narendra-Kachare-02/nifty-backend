@@ -7,10 +7,18 @@
 ## Data flow
 1. **Celery Beat** enqueues `nifty.fetchNifty` only during **09:15–15:30 IST** (Mon–Fri).
 2. **Celery Worker** runs `dashboard_backend.nifty.tasks.fetchNifty`.
+3. **Celery Beat** also enqueues `nifty.fetchOptionChain` only during **09:15–15:30 IST** (Mon–Fri).
+4. **Celery Worker** runs `dashboard_backend.nifty.tasks.fetchOptionChain`.
 3. Task calls:
    - `services.fetchNifty.fetchNiftyPayload` (NSE cookie warm-up + JSON fetch)
    - `services.saveNiftySnapshot.saveNiftySnapshot` (DB write)
-4. API `GET /api/nifty/latest/` reads from DB via `services.getNiftySnapshot.getLatestNiftySnapshot`.
+4. Option chain task calls:
+   - `services.fetchOptionChain.fetchOptionChainPayload`
+   - `services.saveOptionChainSnapshot.saveOptionChainSnapshot`
+5. APIs:
+   - `GET /api/nifty/latest/`
+   - `GET /api/nifty/series/?range=15M|30M|1H|1D`
+   - `GET /api/nifty/option-chain/latest/?expiryDate=...`
 
 ## DRY + responsibilities
 - **Views** (`views.py`): request/response only.
