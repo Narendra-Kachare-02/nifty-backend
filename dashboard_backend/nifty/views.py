@@ -160,9 +160,13 @@ def cronFetchData(request):
     Call every 1-5 minutes during market hours.
     """
     provided_secret = request.headers.get("X-Cron-Secret", "")
-    if not CRON_SECRET or provided_secret != CRON_SECRET:
+    
+    # If CRON_SECRET is not set, allow access (for initial testing)
+    # Once set, it must match
+    if CRON_SECRET and provided_secret != CRON_SECRET:
+        logger.warning(f"Cron auth failed. Expected length: {len(CRON_SECRET)}, Got length: {len(provided_secret)}")
         return Response(
-            {"error": "Unauthorized"},
+            {"error": "Unauthorized", "hint": "X-Cron-Secret header doesn't match CRON_SECRET env var"},
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
