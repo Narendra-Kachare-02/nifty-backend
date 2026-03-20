@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 _LOCK_PATH = Path("/tmp/nifty_scheduler.lock")
 _STARTED = False
 _START_LOCK = threading.Lock()
+_LOCK_HANDLE = None
 
 
 def _try_acquire_lock():
@@ -78,11 +79,15 @@ def start_nifty_scheduler(interval_seconds: int = 60) -> None:
         if _STARTED:
             return
 
+        global _LOCK_HANDLE
+
         lock_handle = _try_acquire_lock()
         if lock_handle is None:
             # Another worker acquired the lock.
             return
 
+        # Keep handle alive so the lock is held for the lifetime of this process.
+        _LOCK_HANDLE = lock_handle
         _STARTED = True
         logger.info("Nifty schedule scheduler started interval_seconds=%s", interval_seconds)
 

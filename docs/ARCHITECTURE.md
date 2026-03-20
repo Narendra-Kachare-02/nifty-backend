@@ -5,7 +5,7 @@
 - Persist snapshots in Postgres so **after market close** we keep serving the **last recorded** data.
 
 ## Data flow
-1. **Async loop** (`run_nifty_async_fetch`) runs every minute and calls `dashboard_backend.nifty.tasks.fetchNifty` / `fetchOptionChain`.
+1. **In-process scheduler** (`dashboard_backend.nifty.scheduler`) runs every minute and calls `dashboard_backend.nifty.tasks.fetchNifty` / `fetchOptionChain`.
 2. Each async task checks market hours (`isMarketOpenNow`) to avoid NSE calls outside **09:15–15:15 IST** (Mon–Fri).
 3. Task calls:
    - `services.fetchNifty.fetchNiftyPayload` (Index API: `getIndexData`)

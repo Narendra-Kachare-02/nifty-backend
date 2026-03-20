@@ -20,7 +20,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 # Celery periodic schedules are intentionally disabled.
-# This project now uses an async loop (see `nifty/management/commands/run_nifty_async_fetch.py`)
+# This project now uses an in-process scheduler (see `nifty/scheduler.py`)
 # to run the same fetch logic during market hours.
 app.conf.beat_schedule = {}
 

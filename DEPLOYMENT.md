@@ -66,7 +66,6 @@ After backend is deployed, update `VITE_API_BASE_URL` with the actual Render URL
 | `nifty-postgres` | PostgreSQL | Database |
 | `nifty-redis` | Redis | Cache |
 | `nifty-api` | Web Service | Django REST API |
-| `nifty-async-fetch` | Background Worker | Async Nifty fetch loop |
 
 ### Environment Variables
 
@@ -77,7 +76,7 @@ These are automatically configured by the Blueprint, but you need to manually ad
 | Variable | Service(s) | Description |
 |----------|-----------|-------------|
 | `FRONTEND_URL` | nifty-api | Your Vercel frontend URL (e.g., `https://your-app.vercel.app`) |
-| `JWT_SECRET` | nifty-api, nifty-async-fetch | JWT signing key (generate a secure random string) |
+| `JWT_SECRET` | nifty-api | JWT signing key (generate a secure random string) |
 
 #### Optional (Add if needed)
 
@@ -134,8 +133,7 @@ If you prefer manual setup:
 
 - Go to Render Dashboard → New → Background Worker
 - **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `python manage.py run_nifty_async_fetch --interval-seconds 60`
-- Add environment variables
+ - No extra worker service is required; the schedule runs inside `nifty-api` (web) via `dashboard_backend.nifty.scheduler`.
 
 ---
 
@@ -147,7 +145,7 @@ If you prefer manual setup:
 - [ ] Updated `VITE_API_BASE_URL` in Vercel with Render backend URL
 - [ ] Updated `FRONTEND_URL` in Render with Vercel frontend URL
 - [ ] Tested API connectivity from frontend
-- [ ] Nifty async fetch worker is running (check Render logs)
+- [ ] Nifty scheduler is running (check `nifty-api` logs)
 - [ ] (Optional) Added custom domains in both platforms
 
 ## Troubleshooting
@@ -173,6 +171,6 @@ If you see CORS errors:
 
 ### Nifty Async Fetch Not Running
 
-1. Check `nifty-async-fetch` worker logs in Render
+1. Check `nifty-api` logs for `Nifty schedule scheduler started` / tick messages
 2. Verify `DATABASE_URL` is set and PostgreSQL is reachable
-3. Ensure the worker process is running (Redis/Celery are not required for Nifty fetching)
+3. Ensure the web process is running (Redis/Celery are not required for Nifty fetching)

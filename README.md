@@ -26,7 +26,7 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-## Run (2 processes)
+## Run (1 process)
 
 ### Terminal 1 (API)
 
@@ -34,11 +34,8 @@ python manage.py migrate
 python manage.py runserver 0.0.0.0:8001
 ```
 
-### Terminal 2 (Async fetch worker)
-
-```bash
-python manage.py run_nifty_async_fetch --interval-seconds 60
-```
+Note: Nifty fetching runs automatically inside the Django web process
+(see `dashboard_backend.nifty.scheduler`).
 
 
 ## Docs

@@ -154,7 +154,7 @@ def bootstrap(request):
 def cronFetchData(request):
     """
     Cron endpoint: Called by external cron service (e.g., cron-job.org) to fetch NSE data.
-    Replaces Celery Beat for free tier deployment.
+    Replaces periodic fetch scheduling for free-tier deployments.
     
     Requires X-Cron-Secret header for authentication.
     Call every 1-5 minutes during market hours.
