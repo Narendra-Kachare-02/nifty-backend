@@ -2,7 +2,7 @@
 
 This guide covers deploying the Nifty50 application with:
 - **Frontend**: Vercel
-- **Backend**: Render (with PostgreSQL, Redis, and Celery)
+- **Backend**: Render (with PostgreSQL and Redis)
 
 ## Architecture
 
@@ -10,8 +10,8 @@ This guide covers deploying the Nifty50 application with:
 ┌─────────────┐         ┌─────────────────────────────────────────┐
 │   Vercel    │         │              Render                     │
 │  (Frontend) │ ──────► │  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
-│   React +   │   API   │  │ Django  │  │ Celery  │  │ Celery  │ │
-│    Vite     │ Requests│  │   API   │  │ Worker  │  │  Beat   │ │
+│   React +   │   API   │  │ Django  │  │ Async   │  │ Fetch   │ │
+│    Vite     │ Requests│  │   API   │  │ Worker  │  │         │ │
 └─────────────┘         │  └────┬────┘  └────┬────┘  └────┬────┘ │
                         │       │            │            │      │
                         │  ┌────▼────────────▼────────────▼────┐ │
@@ -64,10 +64,9 @@ After backend is deployed, update `VITE_API_BASE_URL` with the actual Render URL
 | Service | Type | Description |
 |---------|------|-------------|
 | `nifty-postgres` | PostgreSQL | Database |
-| `nifty-redis` | Redis | Cache & Celery broker |
+| `nifty-redis` | Redis | Cache |
 | `nifty-api` | Web Service | Django REST API |
-| `nifty-celery-worker` | Background Worker | Celery task executor |
-| `nifty-celery-beat` | Background Worker | Celery scheduler |
+| `nifty-async-fetch` | Background Worker | Async Nifty fetch loop |
 
 ### Environment Variables
 
@@ -78,7 +77,7 @@ These are automatically configured by the Blueprint, but you need to manually ad
 | Variable | Service(s) | Description |
 |----------|-----------|-------------|
 | `FRONTEND_URL` | nifty-api | Your Vercel frontend URL (e.g., `https://your-app.vercel.app`) |
-| `JWT_SECRET` | nifty-api, nifty-celery-worker | JWT signing key (generate a secure random string) |
+| `JWT_SECRET` | nifty-api, nifty-async-fetch | JWT signing key (generate a secure random string) |
 
 #### Optional (Add if needed)
 
@@ -101,8 +100,8 @@ These are automatically set by Render's Blueprint:
 | `DJANGO_ALLOWED_HOSTS` | Set to `.onrender.com` |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
-| `CELERY_BROKER_URL` | Celery broker URL (Redis) |
-| `CELERY_RESULT_BACKEND` | Celery result backend (Redis) |
+| `CELERY_BROKER_URL` | Celery broker URL (Redis) (optional) |
+| `CELERY_RESULT_BACKEND` | Celery result backend (Redis) (optional) |
 
 ---
 
@@ -131,18 +130,11 @@ If you prefer manual setup:
 - **Start Command**: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2`
 - Add environment variables (see above)
 
-### 4. Create Celery Worker
+### 4. Create Async Fetch Worker
 
 - Go to Render Dashboard → New → Background Worker
 - **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `celery -A config worker -l info`
-- Add environment variables
-
-### 5. Create Celery Beat
-
-- Go to Render Dashboard → New → Background Worker
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `celery -A config beat -l info`
+- **Start Command**: `python manage.py run_nifty_async_fetch --interval-seconds 60`
 - Add environment variables
 
 ---
@@ -155,7 +147,7 @@ If you prefer manual setup:
 - [ ] Updated `VITE_API_BASE_URL` in Vercel with Render backend URL
 - [ ] Updated `FRONTEND_URL` in Render with Vercel frontend URL
 - [ ] Tested API connectivity from frontend
-- [ ] Celery worker and beat are running (check Render logs)
+- [ ] Nifty async fetch worker is running (check Render logs)
 - [ ] (Optional) Added custom domains in both platforms
 
 ## Troubleshooting
@@ -179,8 +171,8 @@ If you see CORS errors:
 2. Check WhiteNoise middleware is enabled
 3. Verify `STATIC_ROOT` directory exists
 
-### Celery Tasks Not Running
+### Nifty Async Fetch Not Running
 
-1. Check Celery worker logs in Render
-2. Verify `CELERY_BROKER_URL` is correct
-3. Ensure Redis service is running
+1. Check `nifty-async-fetch` worker logs in Render
+2. Verify `DATABASE_URL` is set and PostgreSQL is reachable
+3. Ensure the worker process is running (Redis/Celery are not required for Nifty fetching)

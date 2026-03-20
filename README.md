@@ -1,4 +1,4 @@
-# Backend (Django + DRF + Celery)
+# Backend (Django + DRF)
 
 ## What this does
 - Fetches **real NIFTY 50** data from NSE.
@@ -26,7 +26,7 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-## Run (3 processes)
+## Run (2 processes)
 
 ### Terminal 1 (API)
 
@@ -34,17 +34,12 @@ python manage.py migrate
 python manage.py runserver 0.0.0.0:8001
 ```
 
-### Terminal 2 (Celery worker)
+### Terminal 2 (Async fetch worker)
 
 ```bash
-celery -A config.celery_app worker -l info
+python manage.py run_nifty_async_fetch --interval-seconds 60
 ```
 
-### Terminal 3 (Celery beat)
-
-```bash
-celery -A config.celery_app beat -l info
-```
 
 ## Docs
 - See `backend/docs/ARCHITECTURE.md`
