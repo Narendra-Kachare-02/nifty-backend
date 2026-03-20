@@ -1,6 +1,8 @@
+import asyncio
 import logging
+from typing import Any, Callable
 
-from celery import shared_task
+from django.db import close_old_connections
 
 from .services import (
     fetchNiftyPayload,
@@ -16,18 +18,25 @@ from .utils import isMarketOpenNow
 
 logger = logging.getLogger(__name__)
 
-
-@shared_task(name="nifty.fetchNifty", ignore_result=True)
-def fetchNifty():
+def _run_sync_in_thread(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
     """
-    Scheduled task: fetch NSE payload and persist a snapshot.
-    Guarded by market hours to avoid NSE calls after close.
+    Run a synchronous function inside a worker thread.
+
+    Ensures Django DB connections are fresh in the thread.
+    """
+    close_old_connections()
+    return fn(*args, **kwargs)
+
+
+async def fetchNifty() -> None:
+    """
+    Fetch NSE payload and persist snapshots (async wrapper).
     """
     if not isMarketOpenNow():
         return
 
-    payload = fetchNiftyPayload()
-    snapshot = saveNiftySnapshot(payload)
+    payload = await asyncio.to_thread(_run_sync_in_thread, fetchNiftyPayload)
+    snapshot = await asyncio.to_thread(_run_sync_in_thread, saveNiftySnapshot, payload)
 
     # One high-signal log line only.
     idx = payload.get("data")[0] if isinstance(payload.get("data"), list) and payload.get("data") else {}
@@ -39,27 +48,39 @@ def fetchNifty():
     )
 
     # Also capture default chart (1D) for the UI.
-    chart_payload = fetchNiftyChartPayload(flag="1D")
-    saveNiftyChartSnapshot(chart_payload, flag="1D")
+    chart_payload = await asyncio.to_thread(
+        _run_sync_in_thread, fetchNiftyChartPayload, flag="1D"
+    )
+    await asyncio.to_thread(
+        _run_sync_in_thread, saveNiftyChartSnapshot, chart_payload, flag="1D"
+    )
 
 
-@shared_task(name="nifty.fetchOptionChain", ignore_result=True)
-def fetchOptionChain():
+async def fetchOptionChain() -> None:
     """
-    Scheduled task: fetch NSE option-chain payload and persist a snapshot.
-    Guarded by market hours to avoid NSE calls after close.
+    Fetch NSE option-chain payload and persist a snapshot (async wrapper).
     """
     if not isMarketOpenNow():
         return
 
-    contract = fetchOptionChainContractInfo()
+    contract = await asyncio.to_thread(
+        _run_sync_in_thread, fetchOptionChainContractInfo
+    )
     expiry_dates = contract.get("expiryDates") if isinstance(contract, dict) else None
     expiry = expiry_dates[0] if isinstance(expiry_dates, list) and expiry_dates else None
     if not expiry:
         return
 
-    payload = fetchOptionChainPayload(expiry=expiry)
-    snapshot = saveOptionChainSnapshot(payload, symbol="NIFTY", expiryDate=expiry)
+    payload = await asyncio.to_thread(
+        _run_sync_in_thread, fetchOptionChainPayload, expiry=expiry
+    )
+    snapshot = await asyncio.to_thread(
+        _run_sync_in_thread,
+        saveOptionChainSnapshot,
+        payload,
+        symbol="NIFTY",
+        expiryDate=expiry,
+    )
 
     logger.info(
         "Saved OptionChain snapshot captured_at=%s symbol=%s expiryDate=%s",

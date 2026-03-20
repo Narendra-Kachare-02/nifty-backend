@@ -5,10 +5,8 @@
 - Persist snapshots in Postgres so **after market close** we keep serving the **last recorded** data.
 
 ## Data flow
-1. **Celery Beat** enqueues `nifty.fetchNifty` only during **09:15–15:15 IST** (Mon–Fri).
-2. **Celery Worker** runs `dashboard_backend.nifty.tasks.fetchNifty`.
-3. **Celery Beat** also enqueues `nifty.fetchOptionChain` only during **09:15–15:15 IST** (Mon–Fri).
-4. **Celery Worker** runs `dashboard_backend.nifty.tasks.fetchOptionChain`.
+1. **Async loop** (`run_nifty_async_fetch`) runs every minute and calls `dashboard_backend.nifty.tasks.fetchNifty` / `fetchOptionChain`.
+2. Each async task checks market hours (`isMarketOpenNow`) to avoid NSE calls outside **09:15–15:15 IST** (Mon–Fri).
 3. Task calls:
    - `services.fetchNifty.fetchNiftyPayload` (Index API: `getIndexData`)
    - `services.saveNiftySnapshot.saveNiftySnapshot` (DB write)
