@@ -9,7 +9,9 @@ from pathlib import Path
 import schedule
 
 from .tasks import fetchNifty, fetchOptionChain
-from .utils import isMarketOpenNow
+from .models import NiftyChartSnapshot, NiftySnapshot, OptionChainSnapshot
+
+from django.db import close_old_connections
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +40,19 @@ def _run_tick() -> None:
     """
     schedule library job (sync). It triggers async work for both fetches.
     """
-    if not isMarketOpenNow():
-        return
-
     try:
+        # Ensure fresh Django connections inside this background thread.
+        close_old_connections()
+
+        need_nifty = not NiftySnapshot.objects.exists()
+        need_chart_1d = not NiftyChartSnapshot.objects.filter(flag="1D").exists()
+        need_option_chain = not OptionChainSnapshot.objects.exists()
+
         async def _main() -> None:
-            await asyncio.gather(fetchNifty(), fetchOptionChain())
+            await asyncio.gather(
+                fetchNifty(force=need_nifty or need_chart_1d),
+                fetchOptionChain(force=need_option_chain),
+            )
 
         asyncio.run(_main())
     except Exception:

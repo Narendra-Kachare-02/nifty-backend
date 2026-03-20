@@ -28,11 +28,11 @@ def _run_sync_in_thread(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> An
     return fn(*args, **kwargs)
 
 
-async def fetchNifty() -> None:
+async def fetchNifty(*, force: bool = False) -> None:
     """
     Fetch NSE payload and persist snapshots (async wrapper).
     """
-    if not isMarketOpenNow():
+    if not force and not isMarketOpenNow():
         return
 
     payload = await asyncio.to_thread(_run_sync_in_thread, fetchNiftyPayload)
@@ -56,11 +56,11 @@ async def fetchNifty() -> None:
     )
 
 
-async def fetchOptionChain() -> None:
+async def fetchOptionChain(*, force: bool = False) -> None:
     """
     Fetch NSE option-chain payload and persist a snapshot (async wrapper).
     """
-    if not isMarketOpenNow():
+    if not force and not isMarketOpenNow():
         return
 
     contract = await asyncio.to_thread(
